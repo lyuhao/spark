@@ -38,6 +38,15 @@ import org.apache.spark.rpc._
 import org.apache.spark.serializer.{JavaSerializer, Serializer}
 import org.apache.spark.util.{ThreadUtils, Utils}
 
+//penality_box add by yuhao
+
+import java.net._
+import java.io._
+import scala.io._
+import java.util.concurrent._
+import org.apache.spark.util.{Clock, SystemClock, ThreadUtils, Utils}
+
+
 private[deploy] class Master(
     override val rpcEnv: RpcEnv,
     address: RpcAddress,
@@ -124,6 +133,29 @@ private[deploy] class Master(
   private val restServerEnabled = conf.getBoolean("spark.master.rest.enabled", true)
   private var restServer: Option[StandaloneRestServer] = None
   private var restServerBoundPort: Option[Int] = None
+
+  //penality_box add by yuhao
+  private val DynamicExecutor = ThreadUtils.newDaemonSingleThreadScheduledExecutor("Dynamic-allocator")
+
+  private def DynamicAdjustExecutor(): Unit = {
+
+    val server = new ServerSocket(9999)
+    while(true) {
+      val s = server.accept()
+      val in = new BufferedReader(new InputStreamReader(s.getInputStream))
+      var ss = in.readLine()
+      var ssarray = ss.split(" ")
+    }
+
+  }
+
+  private def AdjustExecutor(mission: collection.mutable.Map[String,Int]): Unit = {
+    for ((k,v) <- mission) {
+      
+    }
+
+  }
+
 
   override def onStart(): Unit = {
     logInfo("Starting Spark master at " + masterUrl)
