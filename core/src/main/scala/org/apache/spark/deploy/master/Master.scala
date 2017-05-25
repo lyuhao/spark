@@ -151,7 +151,20 @@ private[deploy] class Master(
 
   private def AdjustExecutor(mission: collection.mutable.Map[String,Int]): Unit = {
     for ((k,v) <- mission) {
-      
+      val orinum =  OriExecutors(k)
+      if (ori == -1) {
+
+      }
+      else {
+        if (ori < v) {
+          LaunchExecutors(k,v-ori)
+        } else if (ori > v) {
+          if (ori - v >= ori) {
+            
+          }
+        }
+        }
+      }
     }
 
   }
