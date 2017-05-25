@@ -137,6 +137,7 @@ private[deploy] class Master(
   //penality_box add by yuhao
   private val DynamicExecutor = ThreadUtils.newDaemonSingleThreadScheduledExecutor("Dynamic-allocator")
 
+  private val workerexecutorMap = new HashMap[WorkerInfo,Int]
   private def DynamicAdjustExecutor(): Unit = {
 
     val server = new ServerSocket(9999)
@@ -145,6 +146,7 @@ private[deploy] class Master(
       val in = new BufferedReader(new InputStreamReader(s.getInputStream))
       var ss = in.readLine()
       var ssarray = ss.split(" ")
+      val = app
     }
 
   }
@@ -160,14 +162,58 @@ private[deploy] class Master(
           LaunchExecutors(k,v-ori)
         } else if (ori > v) {
           if (ori - v >= ori) {
-            
-          }
+            RemoveExecutors(k,ori-1)
+          } else {
+            RemoveExecutors(k,ori-v)   
+          } 
+        }else {
+
+          } 
         }
+      } 
+    }
+
+  private def LaunchExecutors(target: String, num: Int, worker:WorkerInfo): Unit = {
+    for (app <- apps) {
+      if (app.id == target) {
+        val coresPerExecutor: Int = app.desc.coresPerExecutor.getOrElse(1)
+        val numExecutors = num
+
+        for (i <- 1 to numExecutors) {
+          val exec = app.addExecutor(worker,coresPerExecutor)
+          launchExecutor(worker,exec)
+          logInfo("launching executors for app "+ app.id + ", executors number is " + exec.)
         }
       }
     }
-
   }
+
+  private def pickExecutor(app:Applications,numOfremove:Int,worker:WorkerInfo):List[ExecutorDesc] = {
+    var removenum = numOfremove
+    var RetList: List[ExecutorDesc] = List[ExecutorDesc]()
+    for ((k,v) <- app.executors) {
+      if (v.worker.id == worker.id) {
+        RetList = v :: RetList
+      }
+    }
+
+    RetList = RetList.sortWith(_.launchingTime < _.launchingTime)
+    RetList = RetLIist.take(removenum)
+    return RetList
+  }
+  private def RemoveExecutors(target: String, num: Int, worker:WorkerInfo): Unit = {
+    for (app <- apps) {
+      if (app.id == target) {
+        if (zzyTargetApp != null) {
+          var removelist = pickExecutor(target,num,worker)
+          for (temp <- removelist) killExecutor(temp)
+        }
+
+      }
+    }
+  }
+
+
 
 
   override def onStart(): Unit = {
