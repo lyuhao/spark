@@ -146,16 +146,29 @@ private[deploy] class Master(
       val in = new BufferedReader(new InputStreamReader(s.getInputStream))
       var ss = in.readLine()
       var ssarray = ss.split(" ")
-      val = app
+      val appid = ssarray[0]
+      val numberexcutor = ssarray[1].toInt
+      val workerid = ssarray[2]
+      val app = idToApp[appid]
+      AdjustExecutor(app,numberexcutor,workerid);
+
     }
 
   }
 
-  private def AdjustExecutor(mission: collection.mutable.Map[String,Int]): Unit = {
-    for ((k,v) <- mission) {
+  private def OriExecutors(target:String): Int = {
+    for (app <- apps) {
+      if(app.id == target) {
+        return app.executors.size
+      }
+    }
+  }
+  private def AdjustExecutor(target:string,numberexcutor:int,workerid:string): Unit = {
+
+      val v = numberexcutor
+
       val orinum =  OriExecutors(k)
       if (ori == -1) {
-
       }
       else {
         if (ori < v) {
@@ -169,8 +182,8 @@ private[deploy] class Master(
         }else {
 
           } 
-        }
-      } 
+      }
+      
     }
 
   private def LaunchExecutors(target: String, num: Int, worker:WorkerInfo): Unit = {
