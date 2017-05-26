@@ -138,7 +138,9 @@ private[deploy] class Master(
   private val DynamicExecutor = ThreadUtils.newDaemonSingleThreadScheduledExecutor("Dynamic-allocator")
 
   private val workerexecutorMap = new HashMap[WorkerInfo,Int]
-  private def DynamicAdjustExecutor(): Unit = {
+
+
+  /*private def DynamicAdjustExecutor(): Unit = {
 
     val server = new ServerSocket(9999)
     while(true) {
@@ -154,7 +156,7 @@ private[deploy] class Master(
 
     }
 
-  }
+  }*/
 
   private def OriExecutors(target:String): Int = {
     for (app <- apps) {
@@ -214,6 +216,7 @@ private[deploy] class Master(
     RetList = RetLIist.take(removenum)
     return RetList
   }
+
   private def RemoveExecutors(target: String, num: Int, worker:WorkerInfo): Unit = {
     for (app <- apps) {
       if (app.id == target) {
@@ -226,6 +229,19 @@ private[deploy] class Master(
     }
   }
 
+class SocketHandler(socket:Socket) extends Runnable {
+  def run() {
+
+    val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
+    var ss = in.readLine()
+    var ssarray = ss.split(" ")
+    val appid = ssarray(0).toInt
+    val numberexcutor = ssarray(1).toInt
+    val workerid = ssarray(2)
+    val out = new PrintStream(socket.getOutputStream())
+    AdjustExecutor(app,numberexcutor,workerid)
+  }
+}
 
 
 
