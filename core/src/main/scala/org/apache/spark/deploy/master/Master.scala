@@ -243,6 +243,24 @@ class SocketHandler(socket:Socket) extends Runnable {
   }
 }
 
+class ServerThread(port:Int, poolSize: Int) extends Runnable {
+  val server = new ServerSocket(port)
+  val pool: ExecutorService = Executors.newFixedThreadPool(poolSize)
+
+  def run () {
+    try {
+      while (true) {
+        val s = server.accept()
+        pool.execute(new SocketHandler(s))
+      }
+    } finally {
+      pool.shutdown()
+    }
+  }
+
+
+}
+
 
 
   override def onStart(): Unit = {
