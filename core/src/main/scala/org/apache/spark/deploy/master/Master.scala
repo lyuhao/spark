@@ -38,6 +38,15 @@ import org.apache.spark.rpc._
 import org.apache.spark.serializer.{JavaSerializer, Serializer}
 import org.apache.spark.util.{ThreadUtils, Utils}
 
+//penality_box add by yuhao
+
+import java.net._
+import java.io._
+import scala.io._
+import java.util.concurrent._
+import org.apache.spark.util.{Clock, SystemClock, ThreadUtils, Utils}
+
+
 private[deploy] class Master(
     override val rpcEnv: RpcEnv,
     address: RpcAddress,
@@ -124,6 +133,115 @@ private[deploy] class Master(
   private val restServerEnabled = conf.getBoolean("spark.master.rest.enabled", true)
   private var restServer: Option[StandaloneRestServer] = None
   private var restServerBoundPort: Option[Int] = None
+
+
+  //penality_box add by yuhao
+  private val DynamicExecutor = ThreadUtils.newDaemonSingleThreadScheduledExecutor("Dynamic-allocator")
+
+  private val workerexecutorMap = new HashMap[WorkerInfo,Int]
+
+
+  private def OriExecutors(target:String): Int = {
+    for (app <- apps) {
+      if (app.id == target) {
+        return app.executors.size
+      }
+    }
+  }
+
+  private def AdjustExecutor(target:string,numberexcutor:int,workerid:string): Unit = {
+    val v = numberexcutor
+    val orinum = OriExecutors(k)
+
+    if (ori == -1) {
+
+    }
+    else {
+      if (ori < v) {
+        LaunchExecutors(k,v-ori)
+      } else if (ori > v) {
+        if (ori - v >= ori) {
+          RemoveExecutors(k,ori-1)
+        } else {
+          RemoveExecutors(k,ori-v) 
+        }
+      } else {
+
+      }
+    }
+
+  } 
+
+  private def LaunchExecutors(target: String, num: Int, worker:WorkerInfo): Unit = {
+    for (app <- apps) {
+      if (app.id == target) {
+        val coresPerExecutor: Int = app.desc.coresPerExecutor.getOrElse(1)
+        val numExecutors = num
+
+        for (i <- 1 to numExecutors) {
+          val exec = app.addExecutor(worker,coresPerExecutor)
+          launchExecutor(worker,exec)
+          logInfo("launching executors for app "+ app.id + ", executors number is " + exec.)
+        }
+      }
+    }
+  }
+
+  private def pickExecutor(app:Applications,numOfremove:Int,worker:WorkerInfo):List[ExecutorDesc] = {
+    var removenum = numOfremove
+    var RetList: List[ExecutorDesc] = List[ExecutorDesc]()
+    for ((k,v) <- app.executors) {
+      if (v.worker.id == worker.id) {
+        RetList = v :: RetList
+      }
+    }
+
+    RetList = RetList.sortWith(_.launchingTime < _.launchingTime)
+    RetList = RetLIist.take(removenum)
+    return RetList
+  }
+
+  private def RemoveExecutors(target: String, num: Int, worker:WorkerInfo): Unit = {
+    for (app <- apps) {
+      if (app.id == target) {
+        if (zzyTargetApp != null) {
+          var removelist = pickExecutor(target,num,worker)
+          for (temp <- removelist) killExecutor(temp)
+        }
+
+      }
+    }
+  }
+
+  class SocketHandler(socket:Socket) extends Runnable {
+    def run() {
+
+      val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
+      var ss = in.readLine()
+      var ssarray = ss.split(" ")
+      val appid = ssarray(0).toInt
+      val numberexcutor = ssarray(1).toInt
+      val workerid = ssarray(2)
+      val out = new PrintStream(socket.getOutputStream())
+      AdjustExecutor(app,numberexcutor,workerid)
+    }
+  }
+
+  class ServerThread(port:Int, poolSize: Int) extends Runnable {
+    val server = new ServerSocket(port)
+    val pool: ExecutorService = Executors.newFixedThreadPool(poolSize)
+
+    def run () {
+      try {
+        while (true) {
+          val s = server.accept()
+          pool.execute(new SocketHandler(s))
+        }
+      } finally {
+        pool.shutdown()
+      }
+  }
+  }
 
   override def onStart(): Unit = {
     logInfo("Starting Spark master at " + masterUrl)
