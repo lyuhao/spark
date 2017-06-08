@@ -142,7 +142,7 @@ private[deploy] class Master(
   
   
 
-  private def OriExecutors(target:String): Int = {
+/*  private def OriExecutors(target:String): Int = {
     for (targetapp <- apps) {
       if (targetapp.id == target) {
         return targetapp.executors.size
@@ -246,7 +246,7 @@ private[deploy] class Master(
         pool.shutdown()
       }
   }
-  }
+  } */
 
   override def onStart(): Unit = {
     logInfo("Starting Spark master at " + masterUrl)
@@ -363,6 +363,7 @@ private[deploy] class Master(
         val app = createApplication(description, driver)
         registerApplication(app)
         logInfo("Registered app " + description.name + " with ID " + app.id)
+        logInfo("----lyuhao: Registered app"+app.id)
         persistenceEngine.addApplication(app)
         driver.send(RegisteredApplication(app.id, self))
         schedule()
@@ -513,6 +514,8 @@ private[deploy] class Master(
         id, workerHost, workerPort, workerRef, cores, memory, workerWebUiUrl) =>
       logInfo("Registering worker %s:%d with %d cores, %s RAM".format(
         workerHost, workerPort, cores, Utils.megabytesToString(memory)))
+
+      logInfo("---lyuhao:Register worker "+id)
       if (state == RecoveryState.STANDBY) {
         context.reply(MasterInStandby)
       } else if (idToWorker.contains(id)) {
