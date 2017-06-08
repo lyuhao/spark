@@ -27,6 +27,7 @@ private[master] class ExecutorDesc(
     val memory: Int) {
 
   var state = ExecutorState.LAUNCHING
+  var launchingTime : Long = -1
 
   /** Copy all state (non-val) variables from the given on-the-wire ExecutorDescription. */
   def copyState(execDesc: ExecutorDescription) {

@@ -139,31 +139,34 @@ private[deploy] class Master(
   private val DynamicExecutor = ThreadUtils.newDaemonSingleThreadScheduledExecutor("Dynamic-allocator")
 
   private val workerexecutorMap = new HashMap[WorkerInfo,Int]
-
+  
+  
 
   private def OriExecutors(target:String): Int = {
-    for (app <- apps) {
-      if (app.id == target) {
-        return app.executors.size
+    for (targetapp <- apps) {
+      if (targetapp.id == target) {
+        return targetapp.executors.size
       }
     }
+
+    return -1
   }
 
-  private def AdjustExecutor(target:string,numberexcutor:int,workerid:string): Unit = {
+  private def AdjustExecutor(target:String,numberexcutor:Int,worker:WorkerInfo): Unit = {
     val v = numberexcutor
-    val orinum = OriExecutors(k)
+    val orinum = OriExecutors(target)
 
-    if (ori == -1) {
+    if (orinum == -1) {
 
     }
     else {
-      if (ori < v) {
-        LaunchExecutors(k,v-ori)
-      } else if (ori > v) {
-        if (ori - v >= ori) {
-          RemoveExecutors(k,ori-1)
+      if (orinum < v) {
+        LaunchExecutors(target,v-orinum,worker)
+      } else if (orinum > v) {
+        if (orinum - v >= orinum) {
+          RemoveExecutors(target,orinum-1,worker)
         } else {
-          RemoveExecutors(k,ori-v) 
+          RemoveExecutors(target,orinum-v,worker) 
         }
       } else {
 
@@ -181,13 +184,13 @@ private[deploy] class Master(
         for (i <- 1 to numExecutors) {
           val exec = app.addExecutor(worker,coresPerExecutor)
           launchExecutor(worker,exec)
-          logInfo("launching executors for app "+ app.id + ", executors number is " + exec.)
+          logInfo("launching executors for app "+ app.id + ", executors number is " + exec.fullId)
         }
       }
     }
   }
 
-  private def pickExecutor(app:Applications,numOfremove:Int,worker:WorkerInfo):List[ExecutorDesc] = {
+  private def pickExecutor(app:ApplicationInfo,numOfremove:Int,worker:WorkerInfo):List[ExecutorDesc] = {
     var removenum = numOfremove
     var RetList: List[ExecutorDesc] = List[ExecutorDesc]()
     for ((k,v) <- app.executors) {
@@ -197,15 +200,15 @@ private[deploy] class Master(
     }
 
     RetList = RetList.sortWith(_.launchingTime < _.launchingTime)
-    RetList = RetLIist.take(removenum)
+    RetList = RetList.take(removenum)
     return RetList
   }
 
   private def RemoveExecutors(target: String, num: Int, worker:WorkerInfo): Unit = {
     for (app <- apps) {
       if (app.id == target) {
-        if (zzyTargetApp != null) {
-          var removelist = pickExecutor(target,num,worker)
+        if (app != null) {
+          var removelist = pickExecutor(app,num,worker)
           for (temp <- removelist) killExecutor(temp)
         }
 
@@ -219,11 +222,13 @@ private[deploy] class Master(
       val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
       var ss = in.readLine()
       var ssarray = ss.split(" ")
-      val appid = ssarray(0).toInt
+      val appid = ssarray(0)
       val numberexcutor = ssarray(1).toInt
       val workerid = ssarray(2)
+     // val app = idToApp(appid)
+      val worker = idToWorker(workerid)
       val out = new PrintStream(socket.getOutputStream())
-      AdjustExecutor(app,numberexcutor,workerid)
+      AdjustExecutor(appid,numberexcutor,worker)
     }
   }
 
@@ -848,6 +853,7 @@ private[deploy] class Master(
 
   private def launchExecutor(worker: WorkerInfo, exec: ExecutorDesc): Unit = {
     logInfo("Launching executor " + exec.fullId + " on worker " + worker.id)
+    exec.launchingTime = java.lang.System.currentTimeMillis()
     worker.addExecutor(exec)
     worker.endpoint.send(LaunchExecutor(masterUrl,
       exec.application.id, exec.id, exec.application.desc, exec.cores, exec.memory))
