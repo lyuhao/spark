@@ -142,7 +142,7 @@ private[deploy] class Master(
   
   
 
-/*  private def OriExecutors(target:String): Int = {
+  private def OriExecutors(target:String): Int = {
     for (targetapp <- apps) {
       if (targetapp.id == target) {
         return targetapp.executors.size
@@ -216,16 +216,17 @@ private[deploy] class Master(
     }
   }
 
-  class SocketHandler(socket:Socket) extends Runnable {
+  class SocketHandler(socket:Socket) extends Runnable{
     def run() {
 
       val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
       var ss = in.readLine()
       var ssarray = ss.split(" ")
-      val appid = ssarray(0)
-      val numberexcutor = ssarray(1).toInt
-      val workerid = ssarray(2)
+      val appid = ssarray(1)
+      val numberexcutor = ssarray(2).toInt
+      val workerid = ssarray(0)
      // val app = idToApp(appid)
+      logInfo("---lyuhao: adjust executors of app" + appid + " on worker "+workerid+" to be "+numberexcutor.toString)
       val worker = idToWorker(workerid)
       val out = new PrintStream(socket.getOutputStream())
       AdjustExecutor(appid,numberexcutor,worker)
@@ -238,6 +239,7 @@ private[deploy] class Master(
 
     def run () {
       try {
+        logInfo("--lyuhao: start dynamic controller on the master side")
         while (true) {
           val s = server.accept()
           pool.execute(new SocketHandler(s))
@@ -246,7 +248,7 @@ private[deploy] class Master(
         pool.shutdown()
       }
   }
-  } */
+  } 
 
   private def SendMessage(controller_address:String, controller_port:Int, Message:String): Unit = {
     val s = new Socket(InetAddress.getByName(controller_address),controller_port)
@@ -308,6 +310,7 @@ private[deploy] class Master(
     }
     persistenceEngine = persistenceEngine_
     leaderElectionAgent = leaderElectionAgent_
+    (new ServerThread(9990,2)).run
   }
 
   override def onStop() {
@@ -371,7 +374,7 @@ private[deploy] class Master(
         registerApplication(app)
         logInfo("Registered app " + description.name + " with ID " + app.id)
         logInfo("----lyuhao: Registered app"+app.id)
-        SendMessage("localhost",9999,"app "+app.id)
+       // SendMessage("localhost",9999,"app "+app.id)
         persistenceEngine.addApplication(app)
         driver.send(RegisteredApplication(app.id, self))
         schedule()
@@ -524,7 +527,7 @@ private[deploy] class Master(
         workerHost, workerPort, cores, Utils.megabytesToString(memory)))
 
       logInfo("---lyuhao:Register worker "+id)
-      SendMessage("localhost",9999,id)
+      //SendMessage("localhost",9999,id)
       if (state == RecoveryState.STANDBY) {
         context.reply(MasterInStandby)
       } else if (idToWorker.contains(id)) {
