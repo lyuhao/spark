@@ -236,13 +236,18 @@ private[deploy] class Master(
   class ServerThread(port:Int, poolSize: Int) extends Runnable {
     val server = new ServerSocket(port)
     val pool: ExecutorService = Executors.newFixedThreadPool(poolSize)
-
+    server.setSoTimeout(1000)
     def run () {
       try {
         logInfo("--lyuhao: start dynamic controller on the master side")
         while (true) {
-          val s = server.accept()
-          pool.execute(new SocketHandler(s))
+          try {
+            val s = server.accept()
+            pool.execute(new SocketHandler(s))
+          }
+          catch {
+            case e:java.net.SocketTimeoutException => {}
+          }
         }
       } finally {
         pool.shutdown()
