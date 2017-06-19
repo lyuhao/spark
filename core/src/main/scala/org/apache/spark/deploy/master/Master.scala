@@ -310,7 +310,7 @@ private[deploy] class Master(
     }
     persistenceEngine = persistenceEngine_
     leaderElectionAgent = leaderElectionAgent_
-    (new ServerThread(9990,2)).run
+    //(new ServerThread(10000,2)).run
   }
 
   override def onStop() {
@@ -349,6 +349,7 @@ private[deploy] class Master(
         RecoveryState.RECOVERING
       }
       logInfo("I have been elected leader! New state: " + state)
+      (new ServerThread(10000,2)).run
       if (state == RecoveryState.RECOVERING) {
         beginRecovery(storedApps, storedDrivers, storedWorkers)
         recoveryCompletionTask = forwardMessageThread.schedule(new Runnable {
