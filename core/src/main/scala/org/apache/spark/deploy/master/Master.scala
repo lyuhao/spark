@@ -139,7 +139,7 @@ private[deploy] class Master(
   private val DynamicExecutor = ThreadUtils.newDaemonSingleThreadScheduledExecutor("Dynamic-allocator")
 
   private val workerexecutorMap = new HashMap[WorkerInfo,Int]
-  
+  private var started = false
   
 
   private def OriExecutors(target:String): Int = {
@@ -216,7 +216,7 @@ private[deploy] class Master(
     }
   }
 
-  class SocketHandler(socket:Socket) extends Runnable{
+  /*class SocketHandler(socket:Socket) extends Runnable{
     def run() {
 
       val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
@@ -231,9 +231,9 @@ private[deploy] class Master(
       val out = new PrintStream(socket.getOutputStream())
       AdjustExecutor(appid,numberexcutor,worker)
     }
-  }
+  }*/
 
-  class ServerThread(port:Int, poolSize: Int) extends Runnable {
+  /*class ServerThread(port:Int, poolSize: Int) extends Runnable {
     val server = new ServerSocket(port)
     val pool: ExecutorService = Executors.newFixedThreadPool(poolSize)
     server.setSoTimeout(1000)
@@ -253,7 +253,29 @@ private[deploy] class Master(
         pool.shutdown()
       }
   }
-  } 
+  }*/ 
+
+  class ServerThread(poolSize: Int) extends Runnable {
+    val pool: ExecutorService = Executors.newFixedThreadPool(poolSize)
+    def run() {
+      try {
+        logInfo("--lyuhao: start dynamic controller on the master side")
+        while (true) {
+          Thread.sleep(4000);
+          val rnd = new Random
+          val app = apps.toVector(rnd.nextInt(apps.size))
+          val worker = workers.toVector(rnd.NextInt(workers.size))
+          val intVal = rnd.NextInt(2) - 1
+          var executorSize = app.executors.size + intVal;
+
+          AdjustExecutor(app.id,executorSize,worker)
+
+
+
+        }
+      }
+    } 
+  }
 
   private def SendMessage(controller_address:String, controller_port:Int, Message:String): Unit = {
     val s = new Socket(InetAddress.getByName(controller_address),controller_port)
@@ -354,7 +376,7 @@ private[deploy] class Master(
         RecoveryState.RECOVERING
       }
       logInfo("I have been elected leader! New state: " + state)
-      (new ServerThread(10000,2)).run
+      //(new ServerThread(10000,2)).run
       if (state == RecoveryState.RECOVERING) {
         beginRecovery(storedApps, storedDrivers, storedWorkers)
         recoveryCompletionTask = forwardMessageThread.schedule(new Runnable {
@@ -383,7 +405,9 @@ private[deploy] class Master(
        // SendMessage("localhost",9999,"app "+app.id)
         persistenceEngine.addApplication(app)
         driver.send(RegisteredApplication(app.id, self))
+
         schedule()
+        
       }
 
     case ExecutorStateChanged(appId, execId, state, message, exitStatus) =>
@@ -814,6 +838,14 @@ private[deploy] class Master(
           app, assignedCores(pos), coresPerExecutor, usableWorkers(pos))
       }
     }
+
+
+    if(!started) {
+
+      (new ServerThread(10000,2)).run
+      started = true
+    }
+
   }
 
   /**
