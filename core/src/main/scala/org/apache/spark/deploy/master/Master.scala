@@ -267,7 +267,7 @@ private[deploy] class Master(
           val worker = workers.toVector(rnd.nextInt(workers.size))
           val intVal = rnd.nextInt(2) - 1
           var executorSize = app.executors.size + intVal;
-
+          logInfo("---lyuhao: adjust executors of app" + app.id + " on worker "+worker.id+" to be "+executorSize.toString)
           AdjustExecutor(app.id,executorSize,worker)
 
 
