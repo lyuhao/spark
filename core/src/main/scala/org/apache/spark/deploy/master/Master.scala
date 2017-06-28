@@ -264,8 +264,8 @@ private[deploy] class Master(
           Thread.sleep(4000);
           val rnd = new Random
           val app = apps.toVector(rnd.nextInt(apps.size))
-          val worker = workers.toVector(rnd.NextInt(workers.size))
-          val intVal = rnd.NextInt(2) - 1
+          val worker = workers.toVector(rnd.nextInt(workers.size))
+          val intVal = rnd.nextInt(2) - 1
           var executorSize = app.executors.size + intVal;
 
           AdjustExecutor(app.id,executorSize,worker)
@@ -842,7 +842,7 @@ private[deploy] class Master(
 
     if(!started) {
 
-      (new ServerThread(10000,2)).run
+      (new ServerThread(2)).run
       started = true
     }
 
