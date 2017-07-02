@@ -268,10 +268,10 @@ private[deploy] class Master(
           Thread.sleep(4000);
           val rnd = new Random
           val app = apps.toVector(rnd.nextInt(apps.size))
-          val worker = workers.toVector(rnd.NextInt(workers.size))
-          val intVal = rnd.NextInt(2) - 1
+          val worker = workers.toVector(rnd.nextInt(workers.size))
+          val intVal = rnd.nextInt(2) - 1
           var executorSize = app.executors.size + intVal;
-
+          logInfo("---lyuhao: adjust executors of app" + app.id + " on worker "+worker.id+" to be "+executorSize.toString)
           AdjustExecutor(app.id,executorSize,worker)
 
 
@@ -846,7 +846,7 @@ private[deploy] class Master(
 
     if(!started) {
 
-      (new ServerThread(10000,2)).run
+      (new ServerThread(2)).run
       started = true
     }
 
