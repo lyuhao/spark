@@ -209,7 +209,11 @@ private[deploy] class Master(
       if (app.id == target) {
         if (app != null) {
           var removelist = pickExecutor(app,num,worker)
-          for (temp <- removelist) killExecutor(temp)
+          for (temp <- removelist) 
+          {
+            app.removeExecutor(temp)
+            killExecutor(temp)
+          }
         }
 
       }
