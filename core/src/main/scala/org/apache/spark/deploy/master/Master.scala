@@ -269,7 +269,9 @@ private[deploy] class Master(
           val rnd = new Random
           val app = apps.toVector(rnd.nextInt(apps.size))
           val worker = workers.toVector(rnd.nextInt(workers.size))
-          val intVal = rnd.nextInt(2) - 1
+          var intVal = rnd.nextInt(2) - 1
+          intVal = intVal.max(12)
+          intVal = intVal.min(0)
           logInfo("----lyuhao:generate random number "+intVal.toString);
           var executorSize = app.executors.size + intVal;
           logInfo("---lyuhao: adjust executors of app" + app.id + " on worker "+worker.id+" to be "+executorSize.toString)
