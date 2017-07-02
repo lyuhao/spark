@@ -266,7 +266,7 @@ private[deploy] class Master(
         logInfo("--lyuhao: start dynamic controller on the master side")
         while (true) {
           Thread.sleep(4000);
-          val rnd = new Random
+          val rnd = scala.util.Random
           val app = apps.toVector(rnd.nextInt(apps.size))
           val worker = workers.toVector(rnd.nextInt(workers.size))
           var intVal = rnd.nextInt(2) - 1
