@@ -264,14 +264,20 @@ private[deploy] class Master(
     def run() {
       try {
         logInfo("--lyuhao: start dynamic controller on the master side")
-        while (true) {
+        // read the file into arrays
+
+        val filname = "/home/yl408/test_file/filename"
+        val lines = Source.fromFile(filename).getLines
+
+        for (line <- lines) {
           Thread.sleep(4000);
           val rnd = scala.util.Random
           val app = apps.toVector(rnd.nextInt(apps.size))
           val worker = workers.toVector(rnd.nextInt(workers.size))
-          var intVal = rnd.nextInt(2) - 1
-          intVal = intVal.max(12)
-          intVal = intVal.min(0)
+          //var intVal = rnd.nextInt(2) - 1
+          //intVal = intVal.max(12)
+          //intVal = intVal.min(0)
+          var intVal = line.toInt
           logInfo("----lyuhao:generate random number "+intVal.toString);
           var executorSize = app.executors.size + intVal;
           logInfo("---lyuhao: adjust executors of app" + app.id + " on worker "+worker.id+" to be "+executorSize.toString)
